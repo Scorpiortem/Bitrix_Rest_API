@@ -8,23 +8,16 @@ from data_fetchers import BitrixFetcher
 from processors import DataProcessor
 from dossier_generator import ReportGenerator
 from logger import setup_logger
+from dotenv import load_dotenv
+load_dotenv()  #загружаем переменные из .env
 
-def load_config(config_path: str) -> Dict:
-    # Подгрузка конфига с проверкой на ошибки
-    if not os.path.exists(config_path):
-        raise FileNotFoundError(f"Конфигурационный файл {config_path} не найден")
-    
-    with open(config_path) as f:
-        config = json.load(f)
-    
-    # Проверка обязательных переменных
-    config['bitrix_token'] = os.getenv('BITRIX_TOKEN')
-    if not config['bitrix_token']:
-        raise ValueError("Переменная окружения BITRIX_TOKEN не установлена")
-    
-    # Инициализируем логгер
-    config['logger'] = setup_logger(config)
-    return config
+def load_config() -> Dict:
+    return {
+        "bitrix_url": os.getenv("BITRIX_URL"),
+        "log_level": os.getenv("LOG_LEVEL", "INFO"),
+        "log_path": os.getenv("LOG_PATH"),
+        "bitrix_token": os.getenv("BITRIX_TOKEN")  #Теперь только из .env
+    }
 
 def main():
     # Инициализируем базовый логгер для обработки ошибок до загрузки конфига

@@ -3,6 +3,13 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+#исключается конфиг с секретами
+.env
+
+#убрал генерируемые папки
+/logs/
+/reports/
+
 # C extensions
 *.so
 
