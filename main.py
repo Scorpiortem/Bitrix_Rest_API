@@ -1,5 +1,4 @@
 import argparse
-import json
 import os
 import sys
 import logging
@@ -40,11 +39,6 @@ def main():
         help="ID сделки в Битрикс24"
     )
     parser.add_argument(
-        '-c', '--config',
-        default='config.json',
-        help="Путь к конфигурационному файлу (по умолчанию: config.json)"
-    )
-    parser.add_argument(
         '-o', '--output',
         default='reports',
         help="Директория для сохранения отчетов (по умолчанию: reports)"
@@ -63,14 +57,17 @@ def main():
     args = parser.parse_args()
 
     try:
-        # Загрузка конфига и переопределение логгера
-        config = load_config(args.config)
-        logger = config['logger']
+        #Загрузка конфига и переопределение логгера
+        config = load_config()
+        logger = setup_logger(config)
 
         if args.verbose:
             logger.setLevel('DEBUG')
 
         logger.info(f"Обработка сделки ID={args.deal_id}")
+        
+        #Создание выходной директории при необходимости
+        os.makedirs(args.output, exist_ok=True)
 
         logger.debug("Запрос данных из Битрикс24...")
         bitrix_data = BitrixFetcher(config).get_deal_data(args.deal_id)
@@ -82,8 +79,7 @@ def main():
             'user': bitrix_data.get('user', {}),
             'dialog': bitrix_data.get('dialog_messages', {})
         }
-
-        os.makedirs(args.output, exist_ok=True)
+        
         base_path = f"{args.output}/deal_{args.deal_id}"
 
         if args.format in ['json', 'all']:

@@ -1,17 +1,18 @@
 import requests
 from typing import Dict, Any, List, Optional
 import time
+import logging
 
 class BaseFetcher:
     def __init__(self, config: Dict[str, Any]):
         #Проходит инициализация базовых параметров для всех API-клиентов
         self.config = config
-        self.logger = config.get("logger")  #Логгер из конфигурации
+        self.logger = config.get("logger", logging.getLogger(__name__))  #Логгер из конфигурации
         self.session = requests.Session()  #Общая сессия для запросов
         self.session.headers.update({"User-Agent": "DealDossier/1.0"})  #Заголовок User-Agent
 
     def _handle_pagination(self, url: str, params: Dict, max_pages: int = 100) -> List[Dict]:
-        """Обработка пагинации API с ограничением максимального числа страниц"""
+        #Обработка пагинации API с ограничением максимального числа страниц
         results = []
         start = 0  # Смещение для пагинации
         page_count = 0  #Счетчик обработанных страниц

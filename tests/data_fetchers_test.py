@@ -1,19 +1,13 @@
 import unittest
-from unittest.mock import MagicMock, call
-import json
+from unittest.mock import MagicMock, call, patch
 from data_fetchers import BaseFetcher, BitrixFetcher
 
 class TestBaseFetcherConfig(unittest.TestCase):
     def setUp(self):
-        #загружаем конфиг
-        with open('config.json') as f:
-            self.test_config = json.load(f)
-        
-        #изменим конфиг для тестов
-        self.test_config["logger"] = MagicMock()
-        
-        #gолучаем URL из конфига и удаляем его, чтобы BaseFetcher не знал о нём
-        self.bitrix_url = self.test_config.pop("bitrix_url")
+        self.test_config = {
+            "log_level": "DEBUG",
+            "logger": MagicMock()
+        }
         
         self.fetcher = BaseFetcher(self.test_config)
         self.fetcher.session = MagicMock()
@@ -50,20 +44,22 @@ class TestBaseFetcherConfig(unittest.TestCase):
 
 class TestBitrixFetcherConfig(unittest.TestCase):
     def setUp(self):
-        with open('config.json') as f:
-            self.test_config = json.load(f)
-            self.test_config["bitrix_token"] = "test_token"
-
-        self.test_config["logger"] = MagicMock()
-
-        #сохраняем URL отдельно, но не удаляем из конфига
-        self.bitrix_url = self.test_config.get("bitrix_url", "https://default-url-for-test")
-
-        self.fetcher = BitrixFetcher(self.test_config)
+        # Мокаем переменные окружения
+        self.patcher = patch.dict('os.environ', {
+            'BITRIX_URL': 'https://test.bitrix24.ru',
+            'BITRIX_TOKEN': 'test_token'
+        })
+        self.patcher.start()
+        
+        self.fetcher = BitrixFetcher()
+        self.fetcher.logger = MagicMock()
         self.fetcher.session = MagicMock()
 
+    def tearDown(self):
+        self.patcher.stop()
+
     def test_bitrix_url_construction(self):
-        expected_url = f"{self.bitrix_url}/rest/1/test_token/"
+        expected_url = "https://test.bitrix24.ru/rest/1/test_token/"
         self.assertEqual(self.fetcher.base_url, expected_url)
 
     def test_full_workflow_with_config(self):
